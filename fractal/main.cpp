@@ -8,21 +8,8 @@
 #include "../gfxLib/gfBitmap.h"
 #include "../gfxLib/gfDrawing.h"
 #include "../gfxLib/gfFont.h"
-#include "../gfxLib/gfGouraud.h"
-#include "../gfxLib/gfJPEG.h"
-
-
-#include "../gfxLib/ff.h" 
 
 #define _MODE640
-
-extern	FATFS			fatfs;			//fs object defined in osFile.cpp
-
-FRESULT 			 	rc;             /* Result code */
-FIL 				 	fil;                /* File object */
-DIR 				 	dir;                /* Directory object */
-FILINFO 			 	fno;            /* File information object */ 
-
 
 extern tgfTextOverlay	con;
 tgfBitmap 			 	screen;
@@ -30,6 +17,8 @@ tgfBitmap 			 	screen;
 
 int animLeds( int j )
 {	
+
+	#if defined( _GFXLIB_RISCV_FATFS )
 		switch( j % 2 )
 		{
 			case 0:
@@ -46,7 +35,8 @@ int animLeds( int j )
 				break;
 
 		}
-		
+
+	#endif		
 	return 0;
 } 
 
@@ -256,15 +246,19 @@ int ffMandelbrot( tgfBitmap *bmp, ushort colorMask, float xmin, float ymin, floa
 	return 0;
 }
 
-int main()
+int main( int argv, char** args )
 {
 	int i;
 	int rv;
 	
 	volatile int j;
-		
+	
+	printf( "Fractal\n" );
+
 	bspInit();
-		
+
+	printf( "bspinit\n" );
+
 	
 	#ifdef _MODE640
 	

@@ -1,6 +1,12 @@
 
 #include "osFile.h"
 
+#ifdef _GFXLIB_SDL
+
+#include <cstring>
+
+#endif
+
 
 #ifdef _GFXLIB_RISCV_FATFS
 
