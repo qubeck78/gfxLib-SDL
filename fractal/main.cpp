@@ -9,7 +9,7 @@
 #include "../gfxLib/gfDrawing.h"
 #include "../gfxLib/gfFont.h"
 
-#define _MODE640
+//#define _MODE640
 
 extern tgfTextOverlay	con;
 tgfBitmap 			 	screen;
@@ -154,6 +154,9 @@ int ffMandelbrot( tgfBitmap *bmp, ushort colorMask, float xmin, float ymin, floa
 	for( y = 0; y < bmp->height; y++ )
 	{
 		animLeds( y );
+
+		bsp->bspMain();
+
 		
 		cr = xmin;
 		
