@@ -40,8 +40,11 @@ class BSP_T
         SDL_Renderer    *renderer;
         SDL_Texture     *texture;
 
- 
+        
     public:
+
+        bool            terminateApp;
+        SDL_Thread      *threadID;
 
     //
         volatile unsigned long  videoMuxMode;
