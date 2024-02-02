@@ -44,7 +44,10 @@ osFile.o: ../gfxLib/osFile.cpp
 	$(CC) -o ../gfxLib/osFile.o ../gfxLib/osFile.cpp 
 
 clean:
-	rm -f *.o *.rec *.disasm *.elf *.mif *.mi *.bin *.map
+	rm -f *.o *.rec *.disasm *.elf *.mif *.mi *.bin *.map *.exe
 	rm -f ../gfxLib/*.o
 
+run: $(TARGET).exe
+	$(TARGET).exe
+	
 	

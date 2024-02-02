@@ -40,7 +40,10 @@ class BSP_T
         SDL_Renderer    *renderer;
         SDL_Texture     *texture;
 
-        
+        unsigned char    consoleFont[2048];
+
+        ulong putChar( ushort *frameBuffer, ushort x, ushort y, uchar letter, uchar format );
+
     public:
 
         bool            terminateApp;

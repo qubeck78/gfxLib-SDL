@@ -31,7 +31,7 @@ int bspInitSDL()
     osAllocAddNode( 1, malloc( _SDRAM_MEMORY_SIZE ), _SDRAM_MEMORY_SIZE, OS_ALLOC_MEMF_FAST );
 
    
-    //bsp->videoMuxMode       = 0x02; //text over gfx, 320x240
+    bsp->videoMuxMode       = 0x02; //text over gfx, 320x240
     
     //connect gfxlib con to hardware text overlay   
 
@@ -144,6 +144,8 @@ void reboot()
 
 BSP_T::BSP_T()
 {
+    FILE *in;
+
     videoMuxMode            = _VIDEOMODE_320_TEXT40_OVER_GFX;
     dmaDisplayPointerStart  = NULL;
 
@@ -186,6 +188,18 @@ BSP_T::BSP_T()
         return;
     }
 
+    //load console font
+
+    in = fopen( "font.dat", "rb" );
+    if( !in )
+    {
+        printf(" Error: Can't load font.dat\n" );
+        return;
+    }
+
+    fread( ( void* )&consoleFont, 1, 2048, in );
+    fclose( in );
+
 }
 
 
@@ -221,6 +235,9 @@ ulong BSP_T::bspMain()
     ushort      *frameBuffer;
     ushort      *textureBuffer;
     ushort       pixel;
+    uchar        letter;
+    uchar        format;
+
 
     ulong        x;
     ulong        y;
@@ -233,21 +250,22 @@ ulong BSP_T::bspMain()
     if( dmaDisplayPointerStart != NULL )
     {
 
+        SDL_LockTexture( texture, NULL, &texturePixels, &texturePitch );
+
         switch( videoMuxMode )
         {
             case _VIDEOMODE_640_TEXT40_OVER_GFX:
+            case _VIDEOMODE_640_TEXT80_OVER_GFX:
 
-                SDL_LockTexture( texture, NULL, &texturePixels, &texturePitch );
                 
                 memcpy( texturePixels, (const void*)bsp->dmaDisplayPointerStart, texturePitch * 480 );
 
-                SDL_UnlockTexture( texture );
 
                 break;
 
             case _VIDEOMODE_320_TEXT40_OVER_GFX:
+            case _VIDEOMODE_320_TEXT80_OVER_GFX:
 
-                SDL_LockTexture( texture, NULL, &texturePixels, &texturePitch );
                 
 
                 frameBuffer     = (ushort*)bsp->dmaDisplayPointerStart;
@@ -269,11 +287,25 @@ ulong BSP_T::bspMain()
 
                 }
 
-                SDL_UnlockTexture( texture );
 
                 break;
         }
 
+        //text overlay
+        for( y = 0; y < con.height; y++ )
+        {
+            for( x = 0; x < con.width; x++ )
+            {
+                letter = con.textBuffer[ ( x * 2 ) + ( y * con.width * 2 ) ];
+                format = con.textBuffer[ 1 + ( x * 2 ) + ( y * con.width * 2 ) ];
+
+                putChar( (ushort*)texturePixels, x, y, letter, format );
+            }
+        }  
+
+
+
+        SDL_UnlockTexture( texture );
 
         SDL_RenderClear( renderer );
         SDL_RenderCopy( renderer, texture, NULL, NULL );
@@ -294,4 +326,80 @@ ulong BSP_T::bspMain()
 
 
     return rv;
+}
+
+ulong BSP_T::putChar( ushort *frameBuffer, ushort x, ushort y, uchar letter, uchar format )
+{
+    ushort   cx;
+    ushort   cy; 
+    ushort   cxMax;
+    ushort   cxStep;
+
+    uchar   *letterPtr;
+    uchar    letterData;
+
+    ushort  letterColor = 0xffff;
+    ushort  backgroundColor = 0x0000;
+    
+    letterPtr = &consoleFont[ letter * 8 ];
+
+    
+    if( videoMuxMode & 0x04 )
+    {
+        //80 column mode
+
+        y       *= 16;
+        x       *= 8;
+        cxMax    = 8;
+        cxStep   = 1;
+
+    }
+    else
+    {
+        //40 column mode
+
+        y       *= 16;
+        x       *= 16;
+        cxMax    = 16;
+        cxStep   = 2;
+    }
+
+
+
+    for( cy = 0; cy < 16; cy += 2 )
+    {
+        letterData = *letterPtr++;
+
+        for( cx = 0; cx < cxMax; cx += cxStep )
+        {
+            if( letterData & 0x80 )
+            {
+                frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x ]      = letterColor;
+                frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x ]   = letterColor;
+
+                if( cxStep == 2 )
+                {
+                    //40 columns
+                    frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x + 1 ]      = letterColor;
+                    frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x + 1 ]   = letterColor;
+                }
+
+            }
+            else
+            {
+                
+
+
+
+            }
+
+            letterData <<= 1;
+
+
+        }
+
+
+    }
+
+    return 0;
 }
