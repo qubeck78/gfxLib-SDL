@@ -19,8 +19,10 @@ BSP_T *bsp = &bspObj;
 
 unsigned int random_state = 3242323459;
 
+int main( void );
 
-int bspInit()
+
+int bspInitSDL()
 {
 
     osAllocInit();
@@ -48,6 +50,44 @@ int bspInit()
     con.width               = 40;               //default 40x30 console
 
     con.textAttributes      = 0x8f;  
+
+    return 0;
+}
+
+int threadFunction( void *data )
+{
+    return main();
+}
+
+
+//windows main
+int main( int argv, char** args )
+{
+
+    bspInitSDL();
+
+    //start user code
+    bsp->threadID = SDL_CreateThread( threadFunction, "gfxLibMainThread", NULL );
+
+    //refresh window, get events
+    do
+    {
+
+        //simulate 60fps refresh
+        SDL_Delay( 1000 / 60 );
+
+        bsp->bspMain();
+
+
+    }while( !bsp->terminateApp );
+
+    return 0;
+}
+
+
+
+int bspInit()
+{
 
     return 0;
 } 
@@ -107,9 +147,11 @@ BSP_T::BSP_T()
     videoMuxMode            = _VIDEOMODE_320_TEXT40_OVER_GFX;
     dmaDisplayPointerStart  = NULL;
 
-    window      = NULL;
-    renderer    = NULL;
-    texture     = NULL;
+    window          = NULL;
+    renderer        = NULL;
+    texture         = NULL;
+    threadID        = NULL;
+    terminateApp    = false;
 
     if( SDL_Init( SDL_INIT_EVERYTHING ) < 0 ) 
     {
@@ -171,17 +213,17 @@ BSP_T::~BSP_T()
 
 ulong BSP_T::bspMain()
 {
-    ulong       rv;
-    SDL_Event   event;
-    int         texturePitch;
-    void*       texturePixels;
+    ulong        rv;
+    SDL_Event    event;
+    int          texturePitch;
+    void        *texturePixels;
     
-    ushort*     frameBuffer;
-    ushort*     textureBuffer;
-    ushort      pixel;
+    ushort      *frameBuffer;
+    ushort      *textureBuffer;
+    ushort       pixel;
 
-    ulong       x;
-    ulong       y;
+    ulong        x;
+    ulong        y;
 
     rv              = 0;
 
@@ -246,7 +288,7 @@ ulong BSP_T::bspMain()
     
         if( event.type == SDL_QUIT ) 
         {
-
+            terminateApp = true;
         }
     }
 

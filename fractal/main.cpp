@@ -9,7 +9,7 @@
 #include "../gfxLib/gfDrawing.h"
 #include "../gfxLib/gfFont.h"
 
-//#define _MODE640
+#define _MODE640
 
 extern tgfTextOverlay	con;
 tgfBitmap 			 	screen;
@@ -154,9 +154,6 @@ int ffMandelbrot( tgfBitmap *bmp, ushort colorMask, float xmin, float ymin, floa
 	for( y = 0; y < bmp->height; y++ )
 	{
 		animLeds( y );
-
-		bsp->bspMain();
-
 		
 		cr = xmin;
 		
@@ -249,18 +246,14 @@ int ffMandelbrot( tgfBitmap *bmp, ushort colorMask, float xmin, float ymin, floa
 	return 0;
 }
 
-int main( int argv, char** args )
+int main()
 {
 	int i;
 	int rv;
 	
 	volatile int j;
 	
-	printf( "Fractal\n" );
-
 	bspInit();
-
-	printf( "bspinit\n" );
 
 	
 	#ifdef _MODE640
@@ -300,7 +293,8 @@ int main( int argv, char** args )
 	gfFillRect( &screen, 0, 0, screen.width - 1, screen.height - 1 , gfColor( 0, 0, 0 ) ); 
 	
 		 
-
+	toPrint( &con, (char*)"Fractal" );
+	
 /*		ffMandelbrot( &screen, -1.7f,  -1.4f, 0.005f, 0.005f );
 
 		delayMs( 30000 );
@@ -313,8 +307,9 @@ int main( int argv, char** args )
 	{
 		ffMandelbrot( &screen, ( randomNumber() >> 7 ) & 7, -1.7f + ((ulong)randomNumber() ) / 3294967296.0f ,  -1.7f + ((ulong)randomNumber() ) / 3294967296.0f , 0.001f, 0.001f );
 
-		delayMs( 30000 );
+//		delayMs( 30000 );
 
+		delayMs( 1000 );
 		
 	}while( 1 );
 	
