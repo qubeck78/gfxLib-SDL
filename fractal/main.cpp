@@ -293,7 +293,7 @@ int main()
 	gfFillRect( &screen, 0, 0, screen.width - 1, screen.height - 1 , gfColor( 0, 0, 0 ) ); 
 	
 		 
-	toPrint( &con, (char*)"Fractal" );
+	toPrint( &con, (char*)"Fractal\n" );	
 	
 /*		ffMandelbrot( &screen, -1.7f,  -1.4f, 0.005f, 0.005f );
 

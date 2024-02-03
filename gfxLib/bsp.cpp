@@ -338,12 +338,149 @@ ulong BSP_T::putChar( ushort *frameBuffer, ushort x, ushort y, uchar letter, uch
     uchar   *letterPtr;
     uchar    letterData;
 
-    ushort  letterColor = 0xffff;
-    ushort  backgroundColor = 0x0000;
-    
+    ushort   letterColor = 0xffff;
+    ushort   backgroundColor = 0x0000;
+    ushort   pixel;
+
     letterPtr = &consoleFont[ letter * 8 ];
 
-    
+    //letter color
+    switch( format & 0x0f )
+    {
+        case 0:
+            letterColor = bspColor565( 0x00, 0x00, 0x00 );
+            break;
+
+        case 1:
+            letterColor = bspColor565( 0x80, 0x00, 0x00 );
+            break;
+
+        case 2:
+            letterColor = bspColor565( 0x00, 0x80, 0x00 );
+            break;
+
+        case 3:
+            letterColor = bspColor565( 0x00, 0x00, 0x80 );
+            break;
+
+        case 4:
+            letterColor = bspColor565( 0x80, 0x80, 0x00 );
+            break;
+
+        case 5:
+            letterColor = bspColor565( 0x00, 0x80, 0x80 );
+            break;
+
+        case 6:
+            letterColor = bspColor565( 0x80, 0x00, 0x80 );
+            break;
+
+        case 7:
+            letterColor = bspColor565( 0x40, 0x40, 0x40 );
+            break;
+
+        case 8:
+            letterColor = bspColor565( 0x80, 0x80, 0x80 );
+            break;
+
+        case 9:
+            letterColor = bspColor565( 0xff, 0x00, 0x00 );
+            break;
+
+        case 10:
+            letterColor = bspColor565( 0x00, 0xff, 0x00 );
+            break;
+
+        case 11:
+            letterColor = bspColor565( 0x00, 0x00, 0xff );
+            break;
+
+        case 12:
+            letterColor = bspColor565( 0xff, 0xff, 0x00 );
+            break;
+
+        case 13:
+            letterColor = bspColor565( 0x00, 0xff, 0xff );
+            break;
+
+        case 14:
+            letterColor = bspColor565( 0xff, 0x00, 0xff );
+            break;
+
+        case 15:
+            letterColor = bspColor565( 0xff, 0xff, 0xff );
+            break;
+    }
+
+    //background color
+    switch( ( format >> 4 ) & 0x0f )
+    {
+        case 0:
+            backgroundColor = bspColor565( 0x00, 0x00, 0x00 );
+            break;
+
+        case 1:
+            backgroundColor = bspColor565( 0x80, 0x00, 0x00 );
+            break;
+
+        case 2:
+            backgroundColor = bspColor565( 0x00, 0x80, 0x00 );
+            break;
+
+        case 3:
+            backgroundColor = bspColor565( 0x00, 0x00, 0x80 );
+            break;
+
+        case 4:
+            backgroundColor = bspColor565( 0x80, 0x80, 0x00 );
+            break;
+
+        case 5:
+            backgroundColor = bspColor565( 0x00, 0x80, 0x80 );
+            break;
+
+        case 6:
+            backgroundColor = bspColor565( 0x80, 0x00, 0x80 );
+            break;
+
+        case 7:
+            backgroundColor = bspColor565( 0x20, 0x20, 0x20 );
+            break;
+
+        case 8:
+            backgroundColor = bspColor565( 0x80, 0x80, 0x80 );
+            break;
+
+        case 9:
+            backgroundColor = bspColor565( 0xff, 0x00, 0x00 );
+            break;
+
+        case 10:
+            backgroundColor = bspColor565( 0x00, 0xff, 0x00 );
+            break;
+
+        case 11:
+            backgroundColor = bspColor565( 0x00, 0x00, 0xff );
+            break;
+
+        case 12:
+            backgroundColor = bspColor565( 0xff, 0xff, 0x00 );
+            break;
+
+        case 13:
+            backgroundColor = bspColor565( 0x00, 0xff, 0xff );
+            break;
+
+        case 14:
+            backgroundColor = bspColor565( 0xff, 0x00, 0xff );
+            break;
+
+        case 15:
+            backgroundColor = bspColor565( 0xff, 0xff, 0xff );
+            break;
+    }
+
+
     if( videoMuxMode & 0x04 )
     {
         //80 column mode
@@ -387,8 +524,68 @@ ulong BSP_T::putChar( ushort *frameBuffer, ushort x, ushort y, uchar letter, uch
             }
             else
             {
-                
+                if( videoMuxMode & 0x02 )
+                {
+                    //mix gfx with text
+                    if( backgroundColor != 0x0000 )
+                    {
+                        if( backgroundColor != bspColor565( 0x80, 0x80, 0x80 ) )
+                        {
+                            //background color
 
+                            frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x ]      = backgroundColor;
+                            frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x ]   = backgroundColor;
+
+                            if( cxStep == 2 )
+                            {
+                                //40 columns
+                                frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x + 1 ]      = backgroundColor;
+                                frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x + 1 ]   = backgroundColor;
+                            }
+
+                        }
+                        else
+                        {
+                            //dim background
+
+                            pixel = frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x ];
+                            frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x ] = bspColor565( bspColor565GetR( pixel ) >> 1, 
+                                bspColor565GetG( pixel ) >> 1, bspColor565GetB( pixel ) >> 1 );
+
+                            pixel = frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x  ];
+                            frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x  ] = bspColor565( bspColor565GetR( pixel ) >> 1, 
+                                bspColor565GetG( pixel ) >> 1, bspColor565GetB( pixel ) >> 1 );
+                            
+                            if( cxStep == 2 )
+                            {
+                                pixel = frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x + 1 ];
+                                frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x + 1 ] = bspColor565( bspColor565GetR( pixel ) >> 1, 
+                                bspColor565GetG( pixel ) >> 1, bspColor565GetB( pixel ) >> 1 );
+
+                                pixel = frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x + 1 ];
+                                frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x + 1 ] = bspColor565( bspColor565GetR( pixel ) >> 1, 
+                                bspColor565GetG( pixel ) >> 1, bspColor565GetB( pixel ) >> 1 );
+                            }
+                        }
+
+                    }
+
+                }
+                else
+                {
+                    //text only
+
+                    frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x ]      = backgroundColor;
+                    frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x ]   = backgroundColor;
+
+                    if( cxStep == 2 )
+                    {
+                        //40 columns
+                        frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x + 1 ]      = backgroundColor;
+                        frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x + 1 ]   = backgroundColor;
+                    }
+
+                }
 
 
             }

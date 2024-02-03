@@ -31,6 +31,10 @@
 #include <SDL2/SDL.h>
 
 
+#define bspColor565( r, g, b ) ( ushort )((((ushort)b >> 3) & 31 ) | (((ushort)g & 252 ) << 3 ) | (((ushort)r & 248 ) << 8 ))
+#define bspColor565GetR( color ) ( ushort )(( color >> 8) & 0xf8 )
+#define bspColor565GetG( color ) ( ushort )(( color >> 3) & 0xfc )
+#define bspColor565GetB( color ) ( ushort )(( color << 3) & 0xf8 )
 
 class BSP_T
 {
