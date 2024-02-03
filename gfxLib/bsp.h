@@ -31,6 +31,10 @@
 #include <SDL2/SDL.h>
 
 
+#define bspColor565( r, g, b ) ( ushort )((((ushort)b >> 3) & 31 ) | (((ushort)g & 252 ) << 3 ) | (((ushort)r & 248 ) << 8 ))
+#define bspColor565GetR( color ) ( ushort )(( color >> 8) & 0xf8 )
+#define bspColor565GetG( color ) ( ushort )(( color >> 3) & 0xfc )
+#define bspColor565GetB( color ) ( ushort )(( color << 3) & 0xf8 )
 
 class BSP_T
 {
@@ -40,7 +44,10 @@ class BSP_T
         SDL_Renderer    *renderer;
         SDL_Texture     *texture;
 
-        
+        unsigned char    consoleFont[2048];
+
+        ulong putChar( ushort *frameBuffer, ushort x, ushort y, uchar letter, uchar format );
+
     public:
 
         bool            terminateApp;

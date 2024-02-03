@@ -1,8 +1,5 @@
-#
-# Makefile for WhiteDragon user program
-#
 
-TARGET = fractal
+TARGET = commanche
 #CC = x86_64-w64-mingw32-gcc -c -O3 -fpermissive -w -Wl,-subsystem,windows 
 CC = x86_64-w64-mingw32-g++ -c -O3 -fpermissive  
 

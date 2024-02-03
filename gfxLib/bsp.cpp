@@ -31,7 +31,7 @@ int bspInitSDL()
     osAllocAddNode( 1, malloc( _SDRAM_MEMORY_SIZE ), _SDRAM_MEMORY_SIZE, OS_ALLOC_MEMF_FAST );
 
    
-    //bsp->videoMuxMode       = 0x02; //text over gfx, 320x240
+    bsp->videoMuxMode       = 0x02; //text over gfx, 320x240
     
     //connect gfxlib con to hardware text overlay   
 
@@ -144,6 +144,8 @@ void reboot()
 
 BSP_T::BSP_T()
 {
+    FILE *in;
+
     videoMuxMode            = _VIDEOMODE_320_TEXT40_OVER_GFX;
     dmaDisplayPointerStart  = NULL;
 
@@ -186,6 +188,18 @@ BSP_T::BSP_T()
         return;
     }
 
+    //load console font
+
+    in = fopen( "font.dat", "rb" );
+    if( !in )
+    {
+        printf(" Error: Can't load font.dat\n" );
+        return;
+    }
+
+    fread( ( void* )&consoleFont, 1, 2048, in );
+    fclose( in );
+
 }
 
 
@@ -221,6 +235,9 @@ ulong BSP_T::bspMain()
     ushort      *frameBuffer;
     ushort      *textureBuffer;
     ushort       pixel;
+    uchar        letter;
+    uchar        format;
+
 
     ulong        x;
     ulong        y;
@@ -233,21 +250,22 @@ ulong BSP_T::bspMain()
     if( dmaDisplayPointerStart != NULL )
     {
 
+        SDL_LockTexture( texture, NULL, &texturePixels, &texturePitch );
+
         switch( videoMuxMode )
         {
             case _VIDEOMODE_640_TEXT40_OVER_GFX:
+            case _VIDEOMODE_640_TEXT80_OVER_GFX:
 
-                SDL_LockTexture( texture, NULL, &texturePixels, &texturePitch );
                 
                 memcpy( texturePixels, (const void*)bsp->dmaDisplayPointerStart, texturePitch * 480 );
 
-                SDL_UnlockTexture( texture );
 
                 break;
 
             case _VIDEOMODE_320_TEXT40_OVER_GFX:
+            case _VIDEOMODE_320_TEXT80_OVER_GFX:
 
-                SDL_LockTexture( texture, NULL, &texturePixels, &texturePitch );
                 
 
                 frameBuffer     = (ushort*)bsp->dmaDisplayPointerStart;
@@ -269,11 +287,25 @@ ulong BSP_T::bspMain()
 
                 }
 
-                SDL_UnlockTexture( texture );
 
                 break;
         }
 
+        //text overlay
+        for( y = 0; y < con.height; y++ )
+        {
+            for( x = 0; x < con.width; x++ )
+            {
+                letter = con.textBuffer[ ( x * 2 ) + ( y * con.width * 2 ) ];
+                format = con.textBuffer[ 1 + ( x * 2 ) + ( y * con.width * 2 ) ];
+
+                putChar( (ushort*)texturePixels, x, y, letter, format );
+            }
+        }  
+
+
+
+        SDL_UnlockTexture( texture );
 
         SDL_RenderClear( renderer );
         SDL_RenderCopy( renderer, texture, NULL, NULL );
@@ -294,4 +326,277 @@ ulong BSP_T::bspMain()
 
 
     return rv;
+}
+
+ulong BSP_T::putChar( ushort *frameBuffer, ushort x, ushort y, uchar letter, uchar format )
+{
+    ushort   cx;
+    ushort   cy; 
+    ushort   cxMax;
+    ushort   cxStep;
+
+    uchar   *letterPtr;
+    uchar    letterData;
+
+    ushort   letterColor = 0xffff;
+    ushort   backgroundColor = 0x0000;
+    ushort   pixel;
+
+    letterPtr = &consoleFont[ letter * 8 ];
+
+    //letter color
+    switch( format & 0x0f )
+    {
+        case 0:
+            letterColor = bspColor565( 0x00, 0x00, 0x00 );
+            break;
+
+        case 1:
+            letterColor = bspColor565( 0x80, 0x00, 0x00 );
+            break;
+
+        case 2:
+            letterColor = bspColor565( 0x00, 0x80, 0x00 );
+            break;
+
+        case 3:
+            letterColor = bspColor565( 0x00, 0x00, 0x80 );
+            break;
+
+        case 4:
+            letterColor = bspColor565( 0x80, 0x80, 0x00 );
+            break;
+
+        case 5:
+            letterColor = bspColor565( 0x00, 0x80, 0x80 );
+            break;
+
+        case 6:
+            letterColor = bspColor565( 0x80, 0x00, 0x80 );
+            break;
+
+        case 7:
+            letterColor = bspColor565( 0x40, 0x40, 0x40 );
+            break;
+
+        case 8:
+            letterColor = bspColor565( 0x80, 0x80, 0x80 );
+            break;
+
+        case 9:
+            letterColor = bspColor565( 0xff, 0x00, 0x00 );
+            break;
+
+        case 10:
+            letterColor = bspColor565( 0x00, 0xff, 0x00 );
+            break;
+
+        case 11:
+            letterColor = bspColor565( 0x00, 0x00, 0xff );
+            break;
+
+        case 12:
+            letterColor = bspColor565( 0xff, 0xff, 0x00 );
+            break;
+
+        case 13:
+            letterColor = bspColor565( 0x00, 0xff, 0xff );
+            break;
+
+        case 14:
+            letterColor = bspColor565( 0xff, 0x00, 0xff );
+            break;
+
+        case 15:
+            letterColor = bspColor565( 0xff, 0xff, 0xff );
+            break;
+    }
+
+    //background color
+    switch( ( format >> 4 ) & 0x0f )
+    {
+        case 0:
+            backgroundColor = bspColor565( 0x00, 0x00, 0x00 );
+            break;
+
+        case 1:
+            backgroundColor = bspColor565( 0x80, 0x00, 0x00 );
+            break;
+
+        case 2:
+            backgroundColor = bspColor565( 0x00, 0x80, 0x00 );
+            break;
+
+        case 3:
+            backgroundColor = bspColor565( 0x00, 0x00, 0x80 );
+            break;
+
+        case 4:
+            backgroundColor = bspColor565( 0x80, 0x80, 0x00 );
+            break;
+
+        case 5:
+            backgroundColor = bspColor565( 0x00, 0x80, 0x80 );
+            break;
+
+        case 6:
+            backgroundColor = bspColor565( 0x80, 0x00, 0x80 );
+            break;
+
+        case 7:
+            backgroundColor = bspColor565( 0x20, 0x20, 0x20 );
+            break;
+
+        case 8:
+            backgroundColor = bspColor565( 0x80, 0x80, 0x80 );
+            break;
+
+        case 9:
+            backgroundColor = bspColor565( 0xff, 0x00, 0x00 );
+            break;
+
+        case 10:
+            backgroundColor = bspColor565( 0x00, 0xff, 0x00 );
+            break;
+
+        case 11:
+            backgroundColor = bspColor565( 0x00, 0x00, 0xff );
+            break;
+
+        case 12:
+            backgroundColor = bspColor565( 0xff, 0xff, 0x00 );
+            break;
+
+        case 13:
+            backgroundColor = bspColor565( 0x00, 0xff, 0xff );
+            break;
+
+        case 14:
+            backgroundColor = bspColor565( 0xff, 0x00, 0xff );
+            break;
+
+        case 15:
+            backgroundColor = bspColor565( 0xff, 0xff, 0xff );
+            break;
+    }
+
+
+    if( videoMuxMode & 0x04 )
+    {
+        //80 column mode
+
+        y       *= 16;
+        x       *= 8;
+        cxMax    = 8;
+        cxStep   = 1;
+
+    }
+    else
+    {
+        //40 column mode
+
+        y       *= 16;
+        x       *= 16;
+        cxMax    = 16;
+        cxStep   = 2;
+    }
+
+
+
+    for( cy = 0; cy < 16; cy += 2 )
+    {
+        letterData = *letterPtr++;
+
+        for( cx = 0; cx < cxMax; cx += cxStep )
+        {
+            if( letterData & 0x80 )
+            {
+                frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x ]      = letterColor;
+                frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x ]   = letterColor;
+
+                if( cxStep == 2 )
+                {
+                    //40 columns
+                    frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x + 1 ]      = letterColor;
+                    frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x + 1 ]   = letterColor;
+                }
+
+            }
+            else
+            {
+                if( videoMuxMode & 0x02 )
+                {
+                    //mix gfx with text
+                    if( backgroundColor != 0x0000 )
+                    {
+                        if( backgroundColor != bspColor565( 0x80, 0x80, 0x80 ) )
+                        {
+                            //background color
+
+                            frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x ]      = backgroundColor;
+                            frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x ]   = backgroundColor;
+
+                            if( cxStep == 2 )
+                            {
+                                //40 columns
+                                frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x + 1 ]      = backgroundColor;
+                                frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x + 1 ]   = backgroundColor;
+                            }
+
+                        }
+                        else
+                        {
+                            //dim background
+
+                            pixel = frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x ];
+                            frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x ] = bspColor565( bspColor565GetR( pixel ) >> 1, 
+                                bspColor565GetG( pixel ) >> 1, bspColor565GetB( pixel ) >> 1 );
+
+                            pixel = frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x  ];
+                            frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x  ] = bspColor565( bspColor565GetR( pixel ) >> 1, 
+                                bspColor565GetG( pixel ) >> 1, bspColor565GetB( pixel ) >> 1 );
+                            
+                            if( cxStep == 2 )
+                            {
+                                pixel = frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x + 1 ];
+                                frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x + 1 ] = bspColor565( bspColor565GetR( pixel ) >> 1, 
+                                bspColor565GetG( pixel ) >> 1, bspColor565GetB( pixel ) >> 1 );
+
+                                pixel = frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x + 1 ];
+                                frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x + 1 ] = bspColor565( bspColor565GetR( pixel ) >> 1, 
+                                bspColor565GetG( pixel ) >> 1, bspColor565GetB( pixel ) >> 1 );
+                            }
+                        }
+
+                    }
+
+                }
+                else
+                {
+                    //text only
+
+                    frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x ]      = backgroundColor;
+                    frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x ]   = backgroundColor;
+
+                    if( cxStep == 2 )
+                    {
+                        //40 columns
+                        frameBuffer[ ( ( cy + y )  * 640 ) +  cx + x + 1 ]      = backgroundColor;
+                        frameBuffer[ ( ( cy + y + 1 ) * 640 ) +  cx + x + 1 ]   = backgroundColor;
+                    }
+
+                }
+
+
+            }
+
+            letterData <<= 1;
+
+
+        }
+
+
+    }
+
+    return 0;
 }
