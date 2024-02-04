@@ -41,7 +41,7 @@ char buf[128];
 
 int animLeds( int j )
 {   
-    /*
+    
         switch( j % 4 )
         {
             case 0:
@@ -71,7 +71,7 @@ int animLeds( int j )
 
                 break;
         }
-      */  
+        
     return 0;
 } 
 
@@ -314,8 +314,8 @@ int main()
         animLeds( i++ );
         
         gfDisplayBitmap( &screen2 );
-        //do{}while( ! bsp->videoVSync );
-        delayMs( 20 );
+        do{}while( ! bsp->videoVSync );
+  
 
         camera.x -= (float)sin( camera.angle ) * 1.1f;
         camera.y -= (float)cos( camera.angle ) * 1.1f;
@@ -325,8 +325,8 @@ int main()
         animLeds( i++ );
 
         gfDisplayBitmap( &screen1 );
-        //do{}while( ! bsp->videoVSync );
-        delayMs( 20 );
+        do{}while( ! bsp->videoVSync );
+
         
         camera.x -= (float)sin( camera.angle ) * 1.1f;
         camera.y -= (float)cos( camera.angle ) * 1.1f;

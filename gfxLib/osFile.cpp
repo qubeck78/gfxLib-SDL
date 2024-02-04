@@ -61,7 +61,7 @@ ulong osFInit( void )
 
    #else
    
-      return 1;   //not implemented
+      return 0;   
 
    #endif
 }
@@ -439,4 +439,126 @@ ulong osFGetS( tosFile *file, uchar *buffer, ulong maxLength )
 
 
    return rv;
+}
+
+ulong osDirOpen( tosDir *dir, char *path )
+{
+
+   if( dir == NULL )
+   {
+      return 1;
+   }
+
+
+   #ifdef _GFXLIB_SDL
+
+   dir->dd = opendir( path );
+
+   if( dir->dd != NULL )
+   {
+      return 0;
+   }
+   else
+   {
+      return 1;
+   }
+
+   #else
+
+   return 1;
+
+   #endif
+
+
+}
+
+ulong osDirClose( tosDir *dir )
+{
+
+   if( dir == NULL )
+   {
+      return 1;
+   }
+
+   #ifdef _GFXLIB_SDL
+
+   if( dir->dd == NULL )
+   {
+      return 1;
+   }
+
+   closedir( dir->dd );
+
+   return 0;
+
+   #else
+
+   return 1;
+
+   #endif
+
+}
+
+ulong osDirRead( tosDir *dir, char *entryName, ulong *entryType )
+{
+   #ifdef _GFXLIB_SDL
+
+   struct dirent  *de;
+
+   #endif
+
+
+   if( entryName == NULL )
+   {
+      return 1;
+   }
+
+   if( entryType == NULL )
+   {
+      
+      return 1;
+   }
+
+   if( dir == NULL )
+   {      
+      return 1;
+   }
+
+   #ifdef _GFXLIB_SDL
+
+   if( dir->dd == NULL )
+   {
+
+      return 1;
+   }
+
+
+   de = readdir( dir->dd );
+   if( de != NULL )
+   {
+      strcpy( entryName, de->d_name );
+
+      *entryType = OS_DIRENTRY_NONE;
+      
+
+      return 0;
+   }
+   else
+   {
+      strcpy( entryName, "" );
+      *entryType = OS_DIRENTRY_NONE;
+
+      return 2;
+   }
+
+
+
+   return 0;
+
+   #else
+
+   return 1;
+
+   #endif
+
 }

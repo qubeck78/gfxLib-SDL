@@ -1,6 +1,8 @@
 #ifndef _BSP_H
 #define _BSP_H
 
+#define _GFXLIB_SDL_EVENTS
+
 
 //Memory regions
 
@@ -43,6 +45,7 @@ class BSP_T
         SDL_Window      *window;
         SDL_Renderer    *renderer;
         SDL_Texture     *texture;
+        
 
         unsigned char    consoleFont[2048];
 
@@ -56,15 +59,61 @@ class BSP_T
     //
         volatile unsigned long  videoMuxMode;
         volatile void*          dmaDisplayPointerStart;
+        volatile unsigned long  frameTimer;
+        
+        //b0 - vsync (positive), value is set after window refreshes
+        //struct below emulates 'property', that emulates register access
+        //works only when read operation is casted to ulong, long or bool
+        struct 
+        {
+            volatile unsigned long    videoVSyncValue;
 
-    //b0 - vsync (positive)
-    //volatile unsigned long videoVSync;
+            operator unsigned long() 
+            { 
+                if( videoVSyncValue != 0 )
+                {
+                    videoVSyncValue = 0;
+                    return 1;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+
+            operator long() 
+            { 
+                if( videoVSyncValue != 0 )
+                {
+                    videoVSyncValue = 0;
+                    return 1;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+
+            operator bool() 
+            { 
+                if( videoVSyncValue != 0 )
+                {
+                    videoVSyncValue = 0;
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+        }videoVSync;
     
     //pointer of gfx data to display (within DMA address space, address divided by 4)
     //volatile unsigned long  dmaDisplayPointerStart;
         
     //wr b7, b6, b5, b4 - LEDS, b0 - spi0SSel
-    //volatile unsigned long gpoPort;
+    volatile unsigned long gpoPort;
     
     //wr b0 - tickTimerReset
     //volatile unsigned long tickTimerConfig;

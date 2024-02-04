@@ -7,6 +7,7 @@
 #ifdef _GFXLIB_SDL
 
   #include <stdio.h>
+	#include <dirent.h>
 
 #endif
 
@@ -45,6 +46,10 @@
 #define OS_FILE_WRITE  2
 #define OS_FILE_APPEND 4
 
+#define OS_DIRENTRY_NONE	0
+#define OS_DIRENTRY_FILE	1
+#define OS_DIRENTRY_DIR		2
+
 typedef struct _tosFile
 {
 
@@ -60,8 +65,16 @@ typedef struct _tosFile
 	FIL 	fd;
 #endif
 
-
 }tosFile;
+
+typedef struct _tosDir
+{
+
+#ifdef _GFXLIB_SDL
+	DIR *dd;
+#endif
+
+}tosDir;
 
 ulong osFInit( void );
 ulong osFOpen( tosFile *file, char *path, ulong mode );
@@ -69,6 +82,10 @@ ulong osFClose( tosFile *file );
 ulong osFWrite( tosFile *file, uchar *buffer, ulong numBytesToWrite );
 ulong osFRead( tosFile *file, uchar *buffer, ulong numBytesToRead, ulong *numBytesRead );
 ulong osFGetS( tosFile *file, uchar *buffer, ulong maxLength );
+
+ulong osDirOpen( tosDir *dir, char *path );
+ulong osDirClose( tosDir *dir );
+ulong osDirRead( tosDir *dir, char *entryName, ulong *entryType );
 
 
 #endif
