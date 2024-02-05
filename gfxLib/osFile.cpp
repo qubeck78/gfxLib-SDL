@@ -13,7 +13,7 @@
 
 #include "bsp.h"
 
-FATFS             fatfs;            /* File system object */
+FATFS             fatfs;
 
 #endif
 
@@ -452,6 +452,12 @@ ulong osFGetS( tosFile *file, uchar *buffer, ulong maxLength )
 ulong osDirOpen( tosDir *dir, char *path )
 {
 
+   #if defined( _GFXLIB_STM32_FATFS ) || defined( _GFXLIB_MC68K_FATFS ) || defined( _GFXLIB_RISCV_FATFS )
+
+   FRESULT    rc;             
+
+   #endif
+
    if( dir == NULL )
    {
       return 1;
@@ -475,13 +481,25 @@ ulong osDirOpen( tosDir *dir, char *path )
       return 1;
    }
 
-   #else
+   #endif
 
-   return 1;
+   #if defined( _GFXLIB_STM32_FATFS ) || defined( _GFXLIB_MC68K_FATFS ) || defined( _GFXLIB_RISCV_FATFS )
+
+   rc = f_opendir( &dir->dd, path );
+
+   if( rc == FR_OK )
+   {
+      return 0;
+   }
+   else
+   {
+      return 1;
+   }
 
    #endif
 
 
+   return 1;
 }
 
 ulong osDirClose( tosDir *dir )
@@ -503,11 +521,18 @@ ulong osDirClose( tosDir *dir )
 
    return 0;
 
-   #else
+   #endif
+
+
+   #if defined( _GFXLIB_STM32_FATFS ) || defined( _GFXLIB_MC68K_FATFS ) || defined( _GFXLIB_RISCV_FATFS )
+
+   return 0;
+
+   #endif
+
 
    return 1;
 
-   #endif
 
 }
 
@@ -518,6 +543,12 @@ ulong osDirRead( tosDir *dir, tosDirItem *dirItem )
    struct dirent  *de;
    char            statPath[512];
    bool            readNextItem;
+
+   #endif
+
+   #if defined( _GFXLIB_STM32_FATFS ) || defined( _GFXLIB_MC68K_FATFS ) || defined( _GFXLIB_RISCV_FATFS )
+   
+   FRESULT         rc;
 
    #endif
 
@@ -595,14 +626,57 @@ ulong osDirRead( tosDir *dir, tosDirItem *dirItem )
       return 2;
    }
 
-
-
    return 0;
 
-   #else
+   #endif
 
-   return 1;
+   #if defined( _GFXLIB_STM32_FATFS ) || defined( _GFXLIB_MC68K_FATFS ) || defined( _GFXLIB_RISCV_FATFS )
+
+   finfo.lfname = dirItem->name;
+   finfo.lfsize = 255;
+
+   //clear long file name
+   dirItem->name[0] = 0;
+
+   rc = f_readdir( &dir->dd, &finfo );
+
+   if( rc != FR_OK )
+   {
+      strcpy( dirItem->name, "" );
+      dirItem->type  = OS_DIRITEM_NONE;
+      dirItem->size  = 0;
+
+      return 2;
+   }
+
+   if( finfo.fattrib & AM_DIR )
+   {
+      dirItem->type  = OS_DIRITEM_DIR;
+      dirItem->size  = 0;
+   }
+   else
+   {
+      dirItem->type  = OS_DIRITEM_FILE;
+      dirItem->size  = finfo.fsize;
+   }
+
+   //check if short file name
+   if( dirItem->name[0] == 0 )
+   {
+      strcpy( dirItem->name, finfo.fname );
+
+   }
+   
+   if( dirItem->name[0] != 0 )
+   {
+      return 0;
+   }
+   else
+   {
+      return 1;
+   }
 
    #endif
+//finfo
 
 }
