@@ -1,7 +1,9 @@
 #ifndef _OSFILE_H
 #define _OSFILE_H
 
+
 #include "gfTypes.h"
+#include <cstring>
 
 
 #ifdef _GFXLIB_SDL
@@ -70,12 +72,20 @@ typedef struct _tosFile
 typedef struct _tosDir
 {
 
+   char   dirPath[256];
+
 #ifdef _GFXLIB_SDL
 
    DIR   *dd;
-   char   dirPath[256];
 
 #endif
+
+#if defined( _GFXLIB_STM32_FATFS ) || defined( _GFXLIB_MC68K_FATFS ) || defined( _GFXLIB_RISCV_FATFS )
+
+   DIR    dd; 
+
+#endif
+
 
 }tosDir;
 
