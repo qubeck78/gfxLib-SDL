@@ -11,6 +11,13 @@
 //https://wiki.libsdl.org/SDL2/FrontPage
 //https://gist.github.com/thales17/fb2e4cff60890a51d9dddd4c6e832ad2
 
+#ifdef _GFXLIB_SDL_EVENTS
+
+#include "osUiEvents.h"
+
+#endif
+
+
 tgfTextOverlay       con;
 
 static BSP_T bspObj;
@@ -18,6 +25,7 @@ static BSP_T bspObj;
 BSP_T *bsp = &bspObj;
 
 unsigned int random_state = 3242323459;
+
 
 int main( void );
 
@@ -200,6 +208,7 @@ BSP_T::BSP_T()
     fread( ( void* )&consoleFont, 1, 2048, in );
     fclose( in );
 
+    frameTimer = 0;
 }
 
 
@@ -241,6 +250,13 @@ ulong BSP_T::bspMain()
 
     ulong        x;
     ulong        y;
+
+    #ifdef _GFXLIB_SDL_EVENTS
+
+    tosUIEvent   osUIEvent;
+
+    #endif 
+
 
     rv              = 0;
 
@@ -313,7 +329,10 @@ ulong BSP_T::bspMain()
 
     }
 
-
+    //trigger vsync
+    videoVSync.videoVSyncValue = 1;
+    frameTimer++;
+    
 
     if( SDL_PollEvent( &event ) ) 
     {
@@ -322,6 +341,107 @@ ulong BSP_T::bspMain()
         {
             terminateApp = true;
         }
+
+
+        #ifdef _GFXLIB_SDL_EVENTS
+
+        if( event.type == SDL_KEYDOWN )
+        {
+            
+            //generate osui event
+            osUIEvent.type  = OS_EVENT_TYPE_KEYBOARD_KEYPRESS;
+            osUIEvent.arg1  = 0;    //keycode
+            osUIEvent.arg2  = 0;    //shiftstate
+            osUIEvent.arg3  = 0;
+            osUIEvent.obj   = NULL;
+
+            //https://wiki.libsdl.org/SDL2/SDL_Keycode
+            
+            switch( event.key.keysym.sym )
+            {
+                case SDLK_DOWN:
+                    osUIEvent.arg1  = _KEYCODE_DOWN;
+                    break;
+
+                case SDLK_UP:
+                    osUIEvent.arg1  = _KEYCODE_UP;
+                    break;
+
+                case SDLK_RETURN:
+                    osUIEvent.arg1  = _KEYCODE_ENTER;
+                    break;
+
+                case SDLK_F1:
+                    osUIEvent.arg1  = _KEYCODE_F1;
+                    break;
+
+                case SDLK_F2:
+                    osUIEvent.arg1  = _KEYCODE_F2;
+                    break;
+
+                case SDLK_F3:
+                    osUIEvent.arg1  = _KEYCODE_F3;
+                    break;
+
+                case SDLK_F4:
+                    osUIEvent.arg1  = _KEYCODE_F4;
+                    break;
+
+                case SDLK_F5:
+                    osUIEvent.arg1  = _KEYCODE_F5;
+                    break;
+
+                case SDLK_F6:
+                    osUIEvent.arg1  = _KEYCODE_F6;
+                    break;
+
+                case SDLK_F7:
+                    osUIEvent.arg1  = _KEYCODE_F7;
+                    break;
+
+                case SDLK_F8:
+                    osUIEvent.arg1  = _KEYCODE_F8;
+                    break;
+
+                case SDLK_F9:
+                    osUIEvent.arg1  = _KEYCODE_F9;
+                    break;
+
+                case SDLK_F10:
+                    osUIEvent.arg1  = _KEYCODE_F10;
+                    break;
+
+                case SDLK_F11:
+                    osUIEvent.arg1  = _KEYCODE_F11;
+                    break;
+
+                case SDLK_F12:
+                    osUIEvent.arg1  = _KEYCODE_F12;
+                    break;
+
+                case SDLK_PAGEUP:
+                    osUIEvent.arg1  = _KEYCODE_PGUP;
+                    break;
+
+                case SDLK_PAGEDOWN:
+                    osUIEvent.arg1  = _KEYCODE_PGDOWN;
+                    break;
+
+                default:
+                    osUIEvent.arg1  = event.key.keysym.sym;
+                    break;
+
+
+
+            }
+
+
+            osPutUIEvent( &osUIEvent );
+
+        }
+
+        #endif
+
     }
 
 

@@ -25,10 +25,6 @@ ulong osPutUIEvent( tosUIEvent *event )
 		return 1;
 	}
 
-	if( osUIEventQueue.lock )
-	{
-		return 2;
-	}
 
 	osUIEventQueue.lock = 1;
 
