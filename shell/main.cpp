@@ -31,6 +31,7 @@ extern	FATFS			fatfs;			//fs object defined in osFile.cpp
 #endif
 
 
+
 extern	tgfTextOverlay	con;
 
 

@@ -18,16 +18,9 @@
 extern tgfBitmap     screen;
 extern tgfTextOverlay   con;
 
-/*
-extern FATFS         fatfs;         //fs object defined in osFile.cpp
-FRESULT           rc;             // Result code 
-FIL               fil;                // File object 
-DIR               dir;                // Directory object 
-FILINFO           fno;            // File information object  
-*/
-
 tosDir            dir;
-
+tosDirItem        dirItem;
+   
 extern long             selectorWindowIdx;
 extern long             selectorCursorPos;
 extern long             selectorWindowHeight;
@@ -169,7 +162,7 @@ int uiReadDirAndFillSelectorWindowContents()
    int rv;
    int i;
    int j;
-   ulong entryType;
+
 
    rv = 0;
 
@@ -192,7 +185,7 @@ int uiReadDirAndFillSelectorWindowContents()
    {
       lfnBuf[0] = 0;
 
-      rv = osDirRead( &dir, lfnBuf, &entryType );
+      rv = osDirRead( &dir, &dirItem );
 
       if( rv )
       {
@@ -202,32 +195,16 @@ int uiReadDirAndFillSelectorWindowContents()
       if( j >= selectorWindowIdx )
       {
 
-         strncpy( selectorFileNames[i], lfnBuf, _MAXFILENAMELENGTH );
-         selectorFileLengths[i] = 0;
+         strncpy( selectorFileNames[i], dirItem.name, _MAXFILENAMELENGTH );
 
-
- /*        if( fno.lfname[0] != 0 )
-         {
-            strncpy( selectorFileNames[i], fno.lfname, _MAXFILENAMELENGTH );
-            selectorFileNames[i][_MAXFILENAMELENGTH] = 0;   //ensure eos
-         }
-         else
-         {
-            //8.3 filename
-            strcpy( selectorFileNames[i], fno.fname );
-         }
-
-         if( fno.fattrib & AM_DIR )
+         if( dirItem.type == OS_DIRITEM_DIR )
          {
             selectorFileLengths[i] = 0xffffffff;
          }
          else
          {
-            selectorFileLengths[i] = fno.fsize;
+            selectorFileLengths[i] = dirItem.size;
          }
-
-         i++;  //selector file name table index
-*/
 
 
          i++;

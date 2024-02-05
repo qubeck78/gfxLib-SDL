@@ -11,8 +11,8 @@ LD = x86_64-w64-mingw32-g++
 
 all: $(TARGET).exe
 
-$(TARGET).exe: main.o bsp.o osAlloc.o osFile.o gfBitmap.o gfDrawing.o gfFont.o
-	$(LD) main.o ../gfxLib/bsp.o ../gfxLib/osAlloc.o ../gfxLib/osFile.o ../gfxLib/gfBitmap.o ../gfxLib/gfDrawing.o ../gfxLib/gfFont.o -lmingw32  -lSDL2main -lSDL2 -o $(TARGET)
+$(TARGET).exe: main.o bsp.o osAlloc.o osFile.o gfBitmap.o gfDrawing.o gfFont.o osUIEvents.o
+	$(LD) main.o ../gfxLib/bsp.o ../gfxLib/osAlloc.o ../gfxLib/osFile.o ../gfxLib/gfBitmap.o ../gfxLib/gfDrawing.o ../gfxLib/gfFont.o ../gfxLib/osUIEvents.o -lmingw32  -lSDL2main -lSDL2 -o $(TARGET)
 
 
 main.o: main.cpp
@@ -39,6 +39,9 @@ osAlloc.o: ../gfxLib/osAlloc.cpp
 
 osFile.o: ../gfxLib/osFile.cpp
 	$(CC) -o ../gfxLib/osFile.o ../gfxLib/osFile.cpp 
+
+osUIEvents.o: ../gfxLib/osUIEvents.cpp
+	$(CC) -o ../gfxLib/osUIEvents.o ../gfxLib/osUIEvents.cpp 
 
 clean:
 	rm -f *.o *.rec *.disasm *.elf *.mif *.mi *.bin *.map *.exe
